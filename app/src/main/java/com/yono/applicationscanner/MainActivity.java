@@ -2,6 +2,7 @@ package com.yono.applicationscanner;
 
 
 import android.app.SearchManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -19,16 +20,30 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
 import com.squareup.picasso.Picasso;
 import com.synnapps.carouselview.CarouselView;
 import com.synnapps.carouselview.ImageListener;
+import com.yono.applicationscanner.databinding.ActivityMainBinding;
+import com.yono.applicationscanner.mvv.adapter.ExampleAdapter;
+import com.yono.applicationscanner.mvv.models.ExampleMainViewModels;
+import com.yono.applicationscanner.mvv.response.ExampleResponse;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     SharedPreferences sharedPreferences;
     CarouselView carouselView;
+    ActivityMainBinding binding;
+    ExampleMainViewModels viewModels;
+    ExampleAdapter adapter;
 
     MaterialCardView menuBmn, menuHbi, menuKkks, menuLogUpdate, menuScan;
 
@@ -47,13 +62,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        menuBmn = findViewById(R.id.manu_bmn);
-        menuHbi = findViewById(R.id.menu_hbi);
-        menuKkks = findViewById(R.id.menu_kkks);
-        menuLogUpdate = findViewById(R.id.menu_log);
-        menuScan = findViewById(R.id.menu_scanner);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         registerReceiver(new NetworckChecker(), new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
@@ -67,39 +76,58 @@ public class MainActivity extends AppCompatActivity {
 
         carouselImage();
         actionMenu();
+        getDataLastUpdate();
 
     }
 
+    private void getDataLastUpdate() {
+        viewModels = ViewModelProviders.of(this).get(ExampleMainViewModels.class);
+        viewModels.getExampleResponse().observe(this, new Observer<ArrayList<ExampleResponse>>() {
+            @Override
+            public void onChanged(ArrayList<ExampleResponse> exampleResponses) {
+                ArrayList<ExampleResponse> exampleResponseArrayList = exampleResponses;
+                adapter = new ExampleAdapter(getApplicationContext(), exampleResponseArrayList);
+                binding.rvLastUpdateDashboard.setAdapter(adapter);
+                binding.rvLastUpdateDashboard.setLayoutManager(
+                        new LinearLayoutManager(getApplicationContext(),
+                                LinearLayoutManager.HORIZONTAL, false)
+                );
+
+            }
+        });
+    }
+
     private void actionMenu() {
-        menuHbi.setOnClickListener(new View.OnClickListener() {
+
+        binding.menuHbi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(MainActivity.this, HbiActivity.class));
             }
         });
 
-        menuBmn.setOnClickListener(new View.OnClickListener() {
+        binding.manuBmn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 new Utils().PesanToast(MainActivity.this, R.string.app_name);
             }
         });
 
-        menuKkks.setOnClickListener(new View.OnClickListener() {
+        binding.menuKkks.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 new Utils().PesanToast(MainActivity.this, R.string.app_name);
             }
         });
 
-        menuLogUpdate.setOnClickListener(new View.OnClickListener() {
+        binding.menuLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 new Utils().PesanToast(MainActivity.this, R.string.app_name);
             }
         });
 
-        menuScan.setOnClickListener(new View.OnClickListener() {
+        binding.menuScanner.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(MainActivity.this, ScannerActivity.class));
